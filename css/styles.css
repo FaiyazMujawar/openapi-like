@@ -27,8 +27,8 @@
   margin-bottom: 1rem;
 }
 
-tr {
-  overflow-x: hidden;
+hr {
+  height: 3px !important;
 }
 
 .headers {
@@ -36,5 +36,7 @@ tr {
 }
 
 .language {
+  padding: 5px 10px;
   width: fit-content;
+  background-color: #474646;
 }

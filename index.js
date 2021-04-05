@@ -1,23 +1,24 @@
 $.getJSON("./data.json", function ({ info, item: items }) {
   $("#title").text(info.name);
   $("#api-description").text(info.description);
-  items.forEach((item) => {
-    if (item.item) {
-      createSection(item.item, item.name);
+  items.forEach(({ item, name, request }) => {
+    if (item) {
+      createSection(item, name, true);
     } else {
-      createRequest(item.request, item.name);
+      createRequest(request, name);
     }
   });
 });
 
-function createSection(items, name) {
-  items.forEach((item) => {
-    if (item.item) {
-      $("#items").append(`<h5 class="mt-3 mb-3">${name}</h5>`);
-      createSection(item.item, item.name);
-      $("#items").append("<hr />");
+function createSection(items, sectionName, isTopLevel) {
+  $("#items").append(
+    `<h${isTopLevel ? "5" : "6"} class="mt-3 mb-3">${sectionName}</h5>`
+  );
+  items.forEach(({ item, name, request }) => {
+    if (item) {
+      createSection(item, name, false);
     } else {
-      createRequest(item.request, item.name);
+      createRequest(request, name);
     }
   });
 }
@@ -47,7 +48,6 @@ function createRequest(
       ${createPostBody(body, method)}
     </div>
       `);
-    Prism.highlightElement($(this));
   } catch (error) {}
 }
 
@@ -89,7 +89,9 @@ function createPostBody(postBody, method) {
     "javascript"
   );
 
-  return `<pre class="language-javascript"><code class="language-javascript">${data}</code></pre>`;
+  return `<div class="text-muted">EXAMPLE REQUEST BODY</div><pre class="language-javascript"><div class="language shadow rounded mb-3">${postBody.options[
+    postBody.mode
+  ].language.toUpperCase()}</div><code class="language-javascript">${data}</code></pre>`;
 }
 
 function createHeaderRows(headers) {
@@ -125,21 +127,3 @@ function getColor(method) {
       return `blue`;
   }
 }
-
-// const body = postBody[postBody["mode"]];
-//   /* .replace(/^\n\s+/g, "&nbsp;&nbsp;&nbsp;&nbsp;")
-//     .replace(/\n/, "<br/>"); */
-
-//     console.log(body);
-
-//     return `
-//       <div class="text-muted">REQUEST BODY</div>
-//       <pre class="code language-json mt-2">
-//       <div class="language code shadow rounded m-0">${postBody.options[
-//         postBody.mode
-//       ].language.toUpperCase()}</div>
-//       <code class="language-json">
-//         \n${body}
-//       </code>
-//       </pre>
-//     `;
