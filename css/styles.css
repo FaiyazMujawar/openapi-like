@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Karla&display=swap");
+
+:root {
+  --font: "Karla", sans-serif;
+}
+
+.code {
+  position: relative;
+  padding: 16px;
+  margin: 2rem 0;
+  width: 100%;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+}
+
+.method {
+  padding: 3px 6px;
+  border-radius: 3px;
+  color: white;
+  font-weight: bold;
+}
+
+.card {
+  margin-bottom: 1rem;
+}
+
+tr {
+  overflow-x: hidden;
+}
+
+.headers {
+  margin-top: 1rem;
+}
+
+.language {
+  width: fit-content;
+}
