@@ -1,18 +1,34 @@
 var i = 0;
+var count = 0;
+// Make it collapse
 
-$.getJSON("./data.json", function ({ info, item: items }) {
+$.getJSON("./data.json", function ({ info, item: items, variable }) {
   // Set the Collection name
   $("#title").text(info.name);
 
-  // Set the API description
-  $("#api-description").append(
-    marked(
-      info.description ||
-        '_<span class="text-muted">No description provided</span>_'
-    )
+  const server = variable.find(({ key }) => key === "server");
+  $("#server").append(
+    `<div>
+      <b>Base URL: </b>
+      ${
+        server?.value ||
+        getInfoText(
+          "Please define a variable 'server in your Postman collection'"
+        )
+      }
+    </div>
+    <hr/>
+    `
   );
 
-  $("#api-description pre").addClass("language-javascript");
+  // Set the API description
+  $("#api-description").append(
+    marked(info.description || getInfoText("No description provided"))
+  );
+  $("#api-description pre code").each(function () {
+    $(this).html(highlightCode($(this).html()));
+  });
+
   items.forEach(({ item, name, request, description, response }) => {
     if (item) {
       createSection(item, name, true, description);
@@ -20,22 +36,23 @@ $.getJSON("./data.json", function ({ info, item: items }) {
       createRequest(request, name, response[0]);
     }
   });
+
+  $("pre, pre code").addClass("language-javascript");
+  $(".card-text pre code").each(function () {
+    $(this).html(highlightCode($(this).html()));
+  });
 });
 
 function createSection(items, sectionName, isTopLevel, description) {
   $("#items").append(
     `<h${isTopLevel ? "5" : "6"} class="mt-3">${sectionName}</h5>
       <span class="card-text">
-        ${marked(
-          description ||
-            '_<span class="text-muted">No description provided</span>_'
-        )}
+        ${marked(description || getInfoText("No description provided"))}
       </span>`
   );
-
-  items.forEach(({ item, name, request, response }) => {
+  items.forEach(({ item, name, request, description, response }) => {
     if (item) {
-      createSection(item, name, false);
+      createSection(item, name, false, description);
     } else {
       createRequest(request, name, response[0]);
     }
@@ -54,7 +71,6 @@ function createRequest(
     <div class="card">
       <div class="card-header">
       ${name}
-      <button class="btn btn-secondary" data-toggle="collapse" data-target="#collapse${i}">Collapse</button>
     </div>
     <div id="collapse${i++}" class="card-body collapse show">
       <code class="code mb-1">
@@ -79,7 +95,9 @@ function createRequest(
       }
     </div>
       `);
-  } catch (error) {}
+  } catch (error) {
+    console.log({ name, count: count++, error: error.message });
+  }
 }
 
 function getHeadersTable(headers) {
@@ -112,11 +130,7 @@ function createMethodLabel(method) {
 }
 
 function createPostBody(postBody) {
-  const data = Prism.highlight(
-    postBody[postBody.mode],
-    Prism.languages.javascript,
-    "javascript"
-  );
+  const data = highlightCode(postBody[postBody.mode]);
 
   return createJsonBody(postBody.options[postBody.mode].language, data);
 }
@@ -125,25 +139,30 @@ function createJsonBody(language, data) {
   return (
     "<div>" +
     '<div class="text-muted">EXAMPLE REQUEST BODY</div>' +
-    '<pre class="language-javascript">' +
+    "<pre>" +
     '<div class="language shadow rounded mb-3">' +
     language.toUpperCase() +
     "</div>" +
-    `<code class="language-javascript">${data}</code></pre>` +
+    `<code">${data}</code></pre>` +
     "</div>"
   );
 }
 
 function createResponseBody(response) {
+  if (!response)
+    return (
+      "<div>" +
+      `<div class="text-muted">EXAMPLE RESPONSE BODY</div>` +
+      `<pre>` +
+      `<code>${highlightCode("No response found")}</code></pre>` +
+      "</div>"
+    );
+  const { code, status, body } = response;
   return (
     "<div>" +
-    '<div class="text-muted">EXAMPLE RESPONSE BODY</div>' +
-    '<pre class="language-javascript">' +
-    `<code class="language-javascript">${Prism.highlight(
-      response?.body || "No response found",
-      Prism.languages.javascript,
-      "javascript"
-    )}</code></pre>` +
+    `<div class="text-muted">EXAMPLE RESPONSE BODY</div>` +
+    `<pre><div class="mb-3">status: ${code} ${status}</div>` +
+    `<code>${highlightCode(body || "No response found")}</code></pre>` +
     "</div>"
   );
 }
@@ -167,9 +186,10 @@ function createURL(parts) {
   }, "/");
 }
 
-function highlightCode(code) {
-  return Prism.highlight(code, Prism.languages.javascript, "javascript");
-}
+const highlightCode = (code) =>
+  Prism.highlight(code, Prism.languages.javascript, "javascript");
+
+const getInfoText = (text) => `_<span class="text-muted">${text}</span>_`;
 
 function getColor(method) {
   switch (method.toLowerCase()) {

@@ -46,11 +46,3 @@ hr {
   grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   grid-gap: 20px;
 }
-
-code[class*="language-"],
-pre[class*="language-"] {
-  /* white-space: normal !important; */
-  /* word-break: break-all !important; */
-  overflow-wrap: break-word;
-  overflow-x: inherit;
-}
