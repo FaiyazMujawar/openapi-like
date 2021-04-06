@@ -1,18 +1,26 @@
+var i = 0;
+
 $.getJSON("./data.json", function ({ info, item: items }) {
   $("#title").text(info.name);
   $("#api-description").text(info.description);
-  items.forEach(({ item, name, request }) => {
+  items.forEach(({ item, name, request, description }) => {
     if (item) {
-      createSection(item, name, true);
+      createSection(item, name, true, description);
     } else {
       createRequest(request, name);
     }
   });
 });
 
-function createSection(items, sectionName, isTopLevel) {
+function createSection(items, sectionName, isTopLevel, description) {
   $("#items").append(
-    `<h${isTopLevel ? "5" : "6"} class="mt-3 mb-3">${sectionName}</h5>`
+    `<h${isTopLevel ? "5" : "6"} class="mt-3">${sectionName}</h5>
+      <span class="card-text">
+        ${marked(
+          description ||
+            '_<span class="text-muted">No description provided</span>_'
+        )}
+      </span>`
   );
   items.forEach(({ item, name, request }) => {
     if (item) {
@@ -34,14 +42,18 @@ function createRequest(
     <div class="card">
       <div class="card-header">
       ${name}
+      <button class="btn btn-secondary" data-toggle="collapse" data-target="#collapse${i}">Collapse</button>
     </div>
-    <div class="card-body">
+    <div id="collapse${i++}" class="card-body collapse show">
       <code class="code mb-1">
         ${createMethodLabel(method)} ${url}
       </code>
       <div class="mt-4">
         <p class="card-text">
-          ${description || ""}
+        ${marked(
+          description ||
+            '_<span class="text-muted">No description provided</span>_'
+        )}
         </p>
       </div>
       ${getHeadersTable(headers)}
@@ -89,9 +101,18 @@ function createPostBody(postBody, method) {
     "javascript"
   );
 
-  return `<div class="text-muted">EXAMPLE REQUEST BODY</div><pre class="language-javascript"><div class="language shadow rounded mb-3">${postBody.options[
-    postBody.mode
-  ].language.toUpperCase()}</div><code class="language-javascript">${data}</code></pre>`;
+  return createJsonBody(postBody.options[postBody.mode].language, data);
+}
+
+function createJsonBody(language, data) {
+  return (
+    '<div class="text-muted">EXAMPLE REQUEST BODY</div>' +
+    '<pre class="language-javascript">' +
+    '<div class="language shadow rounded mb-3">' +
+    language.toUpperCase() +
+    "</div>" +
+    `<code class="language-javascript">${data}</code></pre>`
+  );
 }
 
 function createHeaderRows(headers) {
