@@ -1,13 +1,23 @@
 var i = 0;
 
 $.getJSON("./data.json", function ({ info, item: items }) {
+  // Set the Collection name
   $("#title").text(info.name);
-  $("#api-description").text(info.description);
-  items.forEach(({ item, name, request, description }) => {
+
+  // Set the API description
+  $("#api-description").append(
+    marked(
+      info.description ||
+        '_<span class="text-muted">No description provided</span>_'
+    )
+  );
+
+  $("#api-description pre").addClass("language-javascript");
+  items.forEach(({ item, name, request, description, response }) => {
     if (item) {
       createSection(item, name, true, description);
     } else {
-      createRequest(request, name);
+      createRequest(request, name, response[0]);
     }
   });
 });
@@ -22,18 +32,20 @@ function createSection(items, sectionName, isTopLevel, description) {
         )}
       </span>`
   );
-  items.forEach(({ item, name, request }) => {
+
+  items.forEach(({ item, name, request, response }) => {
     if (item) {
       createSection(item, name, false);
     } else {
-      createRequest(request, name);
+      createRequest(request, name, response[0]);
     }
   });
 }
 
 function createRequest(
   { method, url: { path }, header, body, description },
-  name
+  name,
+  response
 ) {
   const url = createURL(path);
   const headers = createHeaderRows(header);
@@ -57,7 +69,14 @@ function createRequest(
         </p>
       </div>
       ${getHeadersTable(headers)}
-      ${createPostBody(body, method)}
+      ${
+        ["POST"].includes(method)
+          ? `<div class="request">
+          ${createPostBody(body)}  
+          ${createResponseBody(response)}
+        </div>`
+          : ""
+      }
     </div>
       `);
   } catch (error) {}
@@ -92,9 +111,7 @@ function createMethodLabel(method) {
   `;
 }
 
-function createPostBody(postBody, method) {
-  if (!["POST"].includes(method) || postBody.mode !== "raw") return "";
-
+function createPostBody(postBody) {
   const data = Prism.highlight(
     postBody[postBody.mode],
     Prism.languages.javascript,
@@ -106,12 +123,28 @@ function createPostBody(postBody, method) {
 
 function createJsonBody(language, data) {
   return (
+    "<div>" +
     '<div class="text-muted">EXAMPLE REQUEST BODY</div>' +
     '<pre class="language-javascript">' +
     '<div class="language shadow rounded mb-3">' +
     language.toUpperCase() +
     "</div>" +
-    `<code class="language-javascript">${data}</code></pre>`
+    `<code class="language-javascript">${data}</code></pre>` +
+    "</div>"
+  );
+}
+
+function createResponseBody(response) {
+  return (
+    "<div>" +
+    '<div class="text-muted">EXAMPLE RESPONSE BODY</div>' +
+    '<pre class="language-javascript">' +
+    `<code class="language-javascript">${Prism.highlight(
+      response?.body || "No response found",
+      Prism.languages.javascript,
+      "javascript"
+    )}</code></pre>` +
+    "</div>"
   );
 }
 
@@ -132,6 +165,10 @@ function createURL(parts) {
     if (/[0-9]+/.test(part)) return (url += ":id/");
     return (url += part + "/");
   }, "/");
+}
+
+function highlightCode(code) {
+  return Prism.highlight(code, Prism.languages.javascript, "javascript");
 }
 
 function getColor(method) {
